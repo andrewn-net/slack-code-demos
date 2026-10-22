@@ -22,7 +22,7 @@ from demokit.bot import BotProcess  # noqa: E402
 from demokit.tui import app as tui_app  # noqa: E402
 from demokit.tui.app import SAMPLES, DemoApp  # noqa: E402
 from demokit.tui.screens import (  # noqa: E402
-    BotSettingsScreen, ConfirmScreen, DeleteScreen, NewPersonaScreen, OutputScreen, RecentlyDeletedScreen, Tick,
+    BotSettingsScreen, ConfirmScreen, DeleteScreen, DocScreen, NewPersonaScreen, OutputScreen, RecentlyDeletedScreen, Tick,
     Toggle,
 )
 
@@ -393,14 +393,29 @@ def test_trigger_phrases_are_listed_next_to_the_switch(repo):
     _run(go())
 
 
-def test_channel_links_show_but_docs_do_not(repo):
+def test_channel_links_and_docs_show(repo):
     async def go():
         app = DemoApp(root=repo)
         async with app.run_test(size=(120, 44)) as pilot:
             await _settle(pilot)
             labels = [str(b.label) for b in app.query(Button)]
             assert "Open #acme-hero ↗" in labels
-            assert "Talk track ↗" not in labels and "PREP" not in _page_text(app)
+            assert "Talk track ›" in labels and "DOCS" in _page_text(app)
+    _run(go())
+
+
+def test_a_markdown_doc_opens_in_a_reader(repo):
+    async def go():
+        app = DemoApp(root=repo)
+        async with app.run_test(size=(120, 44)) as pilot:
+            await _settle(pilot)
+            _button(app, "doc:0").press()
+            await _settle(pilot)
+            assert isinstance(app.screen, DocScreen)
+            assert "Talk track: Hero refactor" in str(app.screen.query_one(".sheet-title", Static).render())
+            await pilot.press("escape")
+            await _settle(pilot)
+            assert not isinstance(app.screen, DocScreen)
     _run(go())
 
 

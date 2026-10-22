@@ -34,6 +34,8 @@ Contract every scenario module must satisfy (duck-typed; see ``_template.py``):
   dashboard_blocks() -> list[dict]                    # the Dashboard tab (Block Kit) —
                                                       #   only needed if "dashboard" in ARTIFACTS
   recap_canvas() -> str                               # the recap (posted as a message)
+  RECAP_TITLE / RECAP_TAB: str                        # OPTIONAL — the recap canvas's title and tab
+                                                      #   name (default "Leadership recap" / "Recap")
   provenance() -> dict[str, str]                      # decision → rationale (session-primed)
   render_provenance() -> str                          # provenance rendered for the first agent turn
   CHECK_LABEL: str                                    # e.g. "contrast" → /check-contrast

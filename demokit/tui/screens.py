@@ -17,7 +17,7 @@ from textual.message import Message
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
-from textual.widgets import Button, Checkbox, Input, OptionList, RadioButton, RadioSet, RichLog, Static
+from textual.widgets import Button, Checkbox, Input, Markdown, OptionList, RadioButton, RadioSet, RichLog, Static
 from textual.widgets.option_list import Option
 
 from demokit import actions, health, personas, routing, trash
@@ -283,6 +283,30 @@ class OutputScreen(Sheet):
         if not self.lines and not self.live:
             t = Text("It didn't print anything.", style=MUTED).append("  ").append_text(t)
         self.query_one("#output-status", Static).update(t)
+
+    @on(Button.Pressed, "#close")
+    def _close(self) -> None:
+        self.dismiss(None)
+
+
+class DocScreen(Sheet):
+    """A Markdown doc (a talk track, say), read here in the terminal."""
+
+    def __init__(self, title: str, path: Path):
+        super().__init__()
+        self._title, self.path = title, path
+
+    def compose(self) -> ComposeResult:
+        with Vertical(classes="sheet doc"):
+            yield Static(self._title, classes="sheet-title")
+            with VerticalScroll(classes="doc-scroll"):
+                yield Markdown(self.path.read_text(encoding="utf-8"))
+            yield self.buttons(link("Open in another app ↗", id="open-doc"),
+                               Button("Done", id="close", compact=True, variant="primary"))
+
+    @on(Button.Pressed, "#open-doc")
+    def _open(self) -> None:
+        open_external(str(self.path))
 
     @on(Button.Pressed, "#close")
     def _close(self) -> None:

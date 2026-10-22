@@ -46,7 +46,7 @@ demos/custom/acme-checkout-redesign/
 | `channels` | | Slack channels the demo's seeds create. `./demo` links to them so you can open or archive them in Slack. |
 | `example` | | `true` for built-in examples: they can be hidden but not deleted. |
 | `files` | | Other files this demo owns: seed scripts, `docs/demos/<id>/`, asset globs. They move to `.trash/` with the demo. A file another manifest also lists is kept. A private demo owns its whole folder without listing it. |
-| `docs` | | `{ label, path }` entries: click path, talk track, build plan. `./demo show <id>` lists them (the window doesn't). |
+| `docs` | | `{ label, path }` entries: click path, talk track, build plan. They're under *Docs* on the demo's page in `./demo` (Markdown opens right there, anything else in its own app), and `./demo show <id>` lists them. |
 | `[[actions]]` | | Buttons in `./demo` (see below). |
 
 ## Actions

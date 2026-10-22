@@ -356,6 +356,18 @@ ModalScreen {
     width: 46;
 }
 
+.sheet.doc {
+    width: 90%;
+    max-width: 120;
+    height: 90%;
+}
+
+.doc-scroll {
+    height: 1fr;
+    background: $background;
+    border: round $line;
+}
+
 .sheet-title {
     text-style: bold;
     color: $title;
