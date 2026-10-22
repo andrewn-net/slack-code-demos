@@ -37,7 +37,7 @@ Screen.-short #banner {
     margin-right: 2;
 }
 
-#bot-settings {
+#more {
     background: transparent;
     color: $link;
     border: none;
@@ -45,7 +45,7 @@ Screen.-short #banner {
     text-style: none;
 }
 
-#bot-settings:hover, #bot-settings:focus {
+#more:hover, #more:focus {
     background: transparent;
     text-style: underline;
 }

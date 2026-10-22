@@ -93,7 +93,7 @@ Run `./demo` for the full-screen app, or `./demo <command>` for the same
 features on the command line.
 
 ```
-┌─ SLACK CODE DEMOS ─────────────────────────────────── ● Bot on  Bot settings ┐
+┌─ SLACK CODE DEMOS ─────────────────────────────────── ● Bot on  More…        ┐
 │ Your demos               │  Checkout redesign                                │
 │   Acme  1                │  A product team prototypes the new checkout…      │
 │   ▸ Checkout redesign    │                                                   │
