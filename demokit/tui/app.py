@@ -120,7 +120,7 @@ class DemoApp(App):
             yield Static(TAGLINE, id="app-title")
             yield Static("", id="bot-status")
             yield Button("", id="bot-toggle", compact=True)
-            yield Button("Bot settings", id="bot-settings", compact=True, flat=True)
+            yield Button("More…", id="more", compact=True, flat=True)
         with Horizontal(id="body"):
             with Vertical(id="sidebar"):
                 yield DemoList(id="demos")
@@ -541,9 +541,9 @@ class DemoApp(App):
     def _bot_toggle(self) -> None:
         self.action_toggle_bot()
 
-    @on(Button.Pressed, "#bot-settings")
-    def _bot_settings(self) -> None:
-        self.action_agent()
+    @on(Button.Pressed, "#more")
+    def _more_pressed(self) -> None:
+        self.action_more()
 
     @on(Button.Pressed, "#new-demo")
     @on(Button.Pressed, "#empty-new")

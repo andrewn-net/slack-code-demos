@@ -22,8 +22,8 @@ from demokit.bot import BotProcess  # noqa: E402
 from demokit.tui import app as tui_app  # noqa: E402
 from demokit.tui.app import SAMPLES, DemoApp  # noqa: E402
 from demokit.tui.screens import (  # noqa: E402
-    BotSettingsScreen, ConfirmScreen, DeleteScreen, DocScreen, NewPersonaScreen, OutputScreen, RecentlyDeletedScreen, Tick,
-    Toggle,
+    BotSettingsScreen, ConfirmScreen, DeleteScreen, DocScreen, MoreScreen, NewPersonaScreen, OutputScreen,
+    RecentlyDeletedScreen, Tick, Toggle,
 )
 
 REAL_PERSONA = Path(__file__).resolve().parent.parent / "personas" / "claude_ai.md"
@@ -280,6 +280,19 @@ def test_delete_then_restore_from_recently_deleted(repo):
             assert (repo / "demos/acme.toml").exists()
             assert "acme" in [d.id for d in app.demos]
             assert trash.list_trash(repo) == []
+            log = await _log_text(app, pilot)
+            assert "Deleted “Hero refactor”" in log and "Restored “Hero refactor”" in log
+    _run(go())
+
+
+def test_more_button_in_top_bar_opens_more(repo):
+    async def go():
+        app = DemoApp(root=repo)
+        async with app.run_test(size=(120, 40)) as pilot:
+            await _settle(pilot)
+            await pilot.click("#more")
+            await _settle(pilot)
+            assert isinstance(app.screen, MoreScreen)
     _run(go())
 
 
