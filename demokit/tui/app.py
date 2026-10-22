@@ -34,7 +34,7 @@ from demokit.manifest import ROOT, Action, Demo, load_demos
 from demokit.tui import palette as pal
 from demokit.tui.banner import Banner
 from demokit.tui.screens import (
-    MUTED, BotSettingsScreen, CheckScreen, ConfirmScreen, DeleteScreen, MoreScreen, OutputScreen,
+    MUTED, BotSettingsScreen, CheckScreen, ConfirmScreen, DeleteScreen, DocScreen, MoreScreen, OutputScreen,
     RecentlyDeletedScreen, RouteScreen, Tick, Toggle, link, open_external,
 )
 
@@ -352,6 +352,12 @@ class DemoApp(App):
             out.append(section("Trigger phrases"))
             out += self._phrases(d, hidden)
 
+        if d.docs:
+            out.append(section("Docs"))
+            out.append(HorizontalGroup(*[link(f"{doc.label} {'›' if doc.path.endswith('.md') else '↗'}",
+                                              name=f"doc:{i}") for i, doc in enumerate(d.docs)],
+                                       classes="controls"))
+
         if not d.example:
             out.append(Rule(classes="divider"))
             out.append(link("Delete demo…", name="delete", danger=True))
@@ -520,6 +526,8 @@ class DemoApp(App):
                 self._start_action(d, a)
         elif kind == "output" and d:
             self._show_output(d, arg)
+        elif kind == "doc" and d:
+            self._open_doc(d, int(arg))
         elif kind == "channel":
             self._open_channel(arg)
         elif name == "copy":
@@ -577,6 +585,17 @@ class DemoApp(App):
         else:
             self.copy_to_clipboard(d.trigger)
         self.notify(f"Copied. In Slack, type @{self.agent}, pick it, then paste.")
+
+    def _open_doc(self, d: Demo, i: int) -> None:
+        """Markdown reads here in the window; anything else (an HTML click path) opens in its app."""
+        doc = d.docs[i]
+        path = self.root / doc.path
+        if not path.is_file():
+            self.notify(f"Can't find {doc.path}.", severity="error")
+        elif path.suffix.lower() in (".md", ".markdown"):
+            self.push_screen(DocScreen(f"{doc.label}: {d.name}", path))
+        else:
+            open_external(str(path))
 
     @work(thread=True, group="channel")
     def _open_channel(self, name: str) -> None:

@@ -1018,6 +1018,9 @@ async def run_make_recap(
         return
 
     markdown = _call_with_state(scenario.recap_canvas, **_page_state(channel_id))  # canvas markdown (## sections)
+    # A story can rename the canvas (e.g. a PRD written from the prototype).
+    title = getattr(scenario, "RECAP_TITLE", "") or "Leadership recap"
+    tab = getattr(scenario, "RECAP_TAB", "") or "Recap"
     slackcode.set_channel_flag(channel_id, "recap")
     existing = slackcode.get_recap_canvas_id(channel_id)
 
@@ -1031,20 +1034,20 @@ async def run_make_recap(
             if existing:
                 r = await slackcode.set_canvas_content(client, canvas_id=existing, markdown=markdown)
                 if r.ok:
-                    outcome["verdict"] = ":memo: Updated the *Leadership recap* canvas tab."
+                    outcome["verdict"] = f":memo: Updated the *{title}* canvas tab."
                     outcome["audit"] = f":memo: Claude AI Slack Code recap canvas updated in <#{channel_id}>."
                     return
                 logger.warning("recap canvas edit failed (%s) — re-publishing", r.error)
             r = await slackcode.publish_canvas_view(
-                client, channel_id, title="Leadership recap", markdown=markdown,
-                view_key="recap", name="Recap", access_level="comment",
+                client, channel_id, title=title, markdown=markdown,
+                view_key="recap", name=tab, access_level="comment",
             )
             if r.ok:
                 cid = (r.data or {}).get("canvas_id")
                 if cid:
                     slackcode.set_recap_canvas_id(channel_id, cid)
-                outcome["verdict"] = (":memo: Turned this session into a *Leadership recap* — "
-                                      "it's in the *Recap* canvas tab (comment away; I'll keep it current).")
+                outcome["verdict"] = (f":memo: Turned this session into a *{title}* — "
+                                      f"it's in the *{tab}* canvas tab (comment away; I'll keep it current).")
                 outcome["audit"] = f":memo: Claude AI Slack Code recap canvas published in <#{channel_id}>."
                 return
             logger.warning("recap canvas publish failed (%s) — falling back to message", r.error)
@@ -1057,7 +1060,7 @@ async def run_make_recap(
     for ln in markdown.splitlines():
         lines_out.append(f"*{ln[3:].strip()}*" if ln.startswith("## ") else ln)
     fallback_msg = (
-        ":memo: *Leadership recap* — 5 parts, built from this session and the "
+        f":memo: *{title}* — 5 parts, built from this session and the "
         "dashboard, ready to share:\n\n" + "\n".join(lines_out)
     )
 
@@ -1106,8 +1109,8 @@ def recognize_code_action(text: str) -> str | None:
     if any(k in low for k in (" patch", "generate a patched", " fix ", "apply the fix",
                               "fix it", "make it safe", "make it online-safe")):
         return "patch"
-    if any(k in low for k in (" recap", " slides", " deck", " leadership",
-                              "postmortem", "post-mortem", "post mortem", "write-up", "writeup")):
+    if any(k in low for k in (" recap", " slides", " deck", " leadership", " prd",
+                              "product requirements", "postmortem", "post-mortem", "post mortem", "write-up", "writeup")):
         return "recap"
     if any(k in low for k in ("dashboard", "metrics", "conversion", "it working",
                               "actually working", "the numbers")):

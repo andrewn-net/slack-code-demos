@@ -212,6 +212,11 @@ demo's start with `demos/custom/<id>/`:
 - `files` — the seed script, `docs/demos/<id>/` if you wrote docs, and any
   `scenarios/assets/<prefix>_*` art (skip it for a private demo: it owns its
   whole folder);
+- `docs` — always write a short talk track (`docs/talk-track.md` inside a
+  private demo's folder, `docs/demos/<id>/talk-track.md` for a shared one: what
+  the SE types at each beat, what appears, what to say) and list it as
+  `{ label = "Talk track", path = "<repo-relative path>" }`. Markdown docs open
+  in a reader inside `./demo`, so the SE can follow it there;
 - one `[[actions]]` entry: `id = "post-backstory"`, `run =
   ["channels/seed_<slug>.py", "--create"]`, the `--invite` option ONLY if the SE
   opted into roster invites, and a `repeat_warning` that a second run posts a

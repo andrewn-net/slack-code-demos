@@ -112,6 +112,7 @@ features on the command line.
 |---|---|---|
 | See my demos | opens on launch | `./demo list` |
 | Post a demo's backstory | **Post backstory** | `./demo run <id> post-backstory` |
+| Read a demo's talk track or click path | **Docs** on the demo's page (Markdown opens in the window) | `./demo show <id>` lists them |
 | Start or stop the bot | `B` | — |
 | Check what a phrase opens | `P` | `./demo route "<phrase>"` |
 | Mute a demo | **Respond to these phrases** | `./demo hide <id>` |
@@ -368,6 +369,7 @@ pre-baked, so it renders instantly and the same way every time.
 | ➕ **Second pre-baked edit** | A follow-up ask, such as adding a carousel slide, lands instantly. | `SLIDE_EDIT_PHRASES` · `slide_diff()` · `slide_edit_report()` |
 | 💬 **Reaction after the swap** | A cast member responds once the new image is in. | `phase: "on_image"` |
 | 📋 **Living Plan canvas** | A Plan tab that ticks off steps as each beat lands. | `plan_canvas()` |
+| 📝 **Renamed recap** | The recap canvas becomes the story's own document, such as a PRD written from the prototype. "PRD" opens it as well as "recap". | `RECAP_TITLE` · `RECAP_TAB` |
 | ⚡ **Scripted replies** | An on-story first reply, next-step hint and dashboard reply. The opening reply skips the live agent, so it's instant. | `opening_reply()` · `first_pass_hint()` · `metrics_report()` |
 | 🪶 **Fallback preview** | If Slack rejects a large image page, a smaller version is tried. | `preview_fallbacks()` |
 | 👤 **Cast as real people** | A chime-in posts as that real user when their token is in `tokens.json`, and is spoofed by name otherwise. The bot ignores those posts. | `PARTICIPANTS[].email_stem` · `tokens.json["users"]` |
