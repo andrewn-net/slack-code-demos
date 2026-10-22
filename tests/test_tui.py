@@ -467,3 +467,11 @@ def test_banner_spells_slack_code_demos_at_any_width(repo, cols, big):
             assert banner.size.height == (7 if big else 3)
             assert "BETA" not in str(app.query_one("#app-title", Static).render())
     _run(go())
+
+
+def test_readme_banner_matches_the_app():
+    from pathlib import Path
+
+    from demokit.tui.banner import svg
+    saved = (Path(__file__).resolve().parent.parent / "docs" / "banner.svg").read_text()
+    assert saved == svg(), "regenerate it: .venv/bin/python -m demokit.tui.banner > docs/banner.svg"
