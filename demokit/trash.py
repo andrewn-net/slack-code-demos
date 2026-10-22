@@ -18,7 +18,8 @@ from demokit.manifest import ROOT, Demo, owned_files
 
 TRASH_DIRNAME = ".trash"
 # Folders that stay even when a delete empties them.
-_KEEP_DIRS = {"scenarios", "scenarios_tag", "channels", "demos", "docs", "docs/demos", "scenarios/assets"}
+_KEEP_DIRS = {"scenarios", "scenarios_tag", "channels", "demos", "demos/custom", "docs", "docs/demos",
+              "scenarios/assets"}
 
 
 class RestoreConflict(Exception):

@@ -371,7 +371,7 @@ class CheckScreen(Sheet):
 
     def _demo_text(self) -> Text:
         t = Text("\nDemos\n", style="bold")
-        bad = [c for c in health.repo_checks(self.demos) if not c.ok]
+        bad = [c for c in health.repo_checks(self.demos, self.root) if not c.ok]
         for d in self.demos:
             bad += [health.Check(f"{d.name}: {c.label}", False, c.detail, c.warn)
                     for c in health.demo_checks(d, self.demos, self.root) if not c.ok]

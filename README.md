@@ -143,7 +143,8 @@ Pressing **Return** runs the next step in the checklist.
 
 ### Manifests: what makes a set of files "one demo"
 
-Each demo has a manifest, `demos/<id>.toml`, listing everything it owns:
+Each demo has a manifest, `demos/<id>.toml`, listing everything it owns (a
+[private demo](#-4-keep-customer-demos-private)'s is `demos/custom/<id>/demo.toml`):
 
 ```toml
 name      = "Acme · Checkout redesign"
@@ -160,8 +161,8 @@ label = "Post backstory"
 run   = ["channels/seed_acme_checkout_redesign.py", "--create"]
 ```
 
-`./demo` builds its list by reading every file in `demos/`, so a new manifest
-is a new demo. Field reference: [demos/README.md](demos/README.md).
+`./demo` builds its list by reading every manifest in `demos/` and
+`demos/custom/`, so a new manifest is a new demo. Field reference: [demos/README.md](demos/README.md).
 
 ---
 
@@ -284,16 +285,21 @@ ever writes it. A missing or broken file means "nothing muted".
 A demo built for a real customer shouldn't be pushed back to the shared repo,
 but you still want it working on your machine.
 
-**1. List its files in `.git/info/exclude`.** It works exactly like
-`.gitignore`, but it's never shared, so the customer's name doesn't appear in a
-shared file either.
+**1. Build it in its own folder under `demos/custom/`.** That folder is
+git-ignored, so everything in it stays on your machine and nothing has to name
+the customer. Lay it out like the repo:
 
 ```
-scenarios/acme_*
-channels/seed_acme_*
-demos/acme-*
-docs/demos/acme-*/
+demos/custom/acme-checkout-redesign/
+├── demo.toml                                  its manifest
+├── scenarios/acme_checkout_redesign.py        the story (art in scenarios/assets/)
+├── channels/seed_acme_checkout_redesign.py    posts the backstory
+└── docs/                                      click path, talk track
 ```
+
+Paths in its `demo.toml` still start at the repo root
+(`run = ["demos/custom/acme-checkout-redesign/channels/seed_acme_checkout_redesign.py", "--create"]`).
+The demo owns its whole folder, so it needs no `files` list.
 
 **2. Put Claude Code notes about it** in `CLAUDE.local.md` at the repo root.
 
@@ -303,18 +309,21 @@ file there when the folder exists.
 
 `CLAUDE.local.md` and `qa_local/` are already git-ignored, and
 `/build-slack-demo` asks whether a new customer demo should stay private and
-sets this up for you.
+builds it in `demos/custom/` for you.
+
+To share one later, move its files up into the repo's own folders, rename
+`demo.toml` to `demos/<id>.toml`, and drop `demos/custom/<id>/` from its paths.
 
 > [!IMPORTANT]
-> Exclude the files **before** you commit the demo. Git keeps tracking files
-> it has already committed. If you already have, run `git rm --cached <file>`
-> to stop tracking them; the files stay on disk.
+> Build the demo in `demos/custom/` **before** you commit it. A file you've
+> already committed stays in git's history even after you move it.
 
 > [!TIP]
 > **Why it works:** a demo in this fork is made only of its own new files. The
-> bot, `./demo` and the self-test find them by looking in their folders, so no
-> shared file mentions them. On your machine the files exist and everything
-> sees the demo. In the shared copy they don't, and nothing looks for them.
+> bot, `./demo` and the self-test find them by looking in their folders,
+> including each `demos/custom/<id>/`, so no shared file mentions them. On your
+> machine the files exist and everything sees the demo. In the shared copy they
+> don't, and nothing looks for them.
 
 ---
 
@@ -424,7 +433,8 @@ standard library on macOS and Linux.
 .
 ├── demo                     launcher: ./demo
 ├── demokit/                 the demo manager
-│   ├── manifest.py            reads demos/*.toml
+│   ├── manifest.py            reads demos/*.toml and demos/custom/*/demo.toml
+│   ├── custom.py              finds private demos in demos/custom/
 │   ├── routing.py             "which demo does this phrase open?"
 │   ├── state.py               mute list + run log
 │   ├── actions.py             runs a demo's buttons (seed scripts)
@@ -435,6 +445,7 @@ standard library on macOS and Linux.
 │   ├── cli.py                 ./demo <command>
 │   └── tui/                   the full-screen UI
 ├── demos/                   one manifest per demo
+│   └── custom/              (git-ignored) private demos, one folder each
 ├── personas/
 │   ├── devin.md               new
 │   └── github.md              new

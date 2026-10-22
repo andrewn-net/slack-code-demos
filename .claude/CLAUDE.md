@@ -32,9 +32,10 @@ At the start of a session, check whether `tokens.json` exists:
 
 ## The demo manager (`./demo`)
 
-Every demo is a manifest in `demos/<id>.toml` (see `demos/README.md`) tying its
-scenarios, seed scripts, docs and assets together. `./demo` is the SE's terminal
-UI over them; `./demo <command>` is the same thing for you: `list`, `show <id>`,
+Every demo is a manifest in `demos/<id>.toml`, or `demos/custom/<id>/demo.toml`
+for a private one (see `demos/README.md`), tying its scenarios, seed scripts,
+docs and assets together. `./demo` is the SE's terminal UI over them;
+`./demo <command>` is the same thing for you: `list`, `show <id>`,
 `run <id> <action>`, `route "<phrase>"`, `hide`/`unhide`, `delete` (restorable,
 to `.trash/`), `trash`, `restore`, `check`. Use it to answer "what demos do I
 have", "which demo does this phrase open", or "post the backstory for <demo>".
@@ -65,8 +66,11 @@ to them.
 ## Private demos
 
 A demo built for a real customer usually shouldn't go back into the shared
-repo. Keep its files out of git by listing them in `.git/info/exclude` (this
-clone only, so the customer's name never appears in the shared `.gitignore`).
+repo. Build it in its own folder, `demos/custom/<id>/`, laid out like the repo
+(`demo.toml`, `scenarios/`, `scenarios_tag/`, `channels/`, `docs/`). That folder
+is git-ignored, so there's nothing to exclude and the customer's name never
+appears in a shared file; the bot, `./demo` and the self-test find it like any
+other demo. Paths in its `demo.toml` stay repo-relative.
 Put Claude Code notes about it in `CLAUDE.local.md` at the repo root, and any
 self-test checks in `qa_local/<name>.py` (a `run() -> int` returning its failure
 count). Both are git-ignored, and `qa.py --self-test` runs `qa_local/` when

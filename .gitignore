@@ -13,9 +13,10 @@ tokens.json.*
 # --- Your demo content (real names, emails, customers) ----------------------
 # Per-SE channel context the builder writes.
 personas/_demo_context.md
+# Private demos: each one's whole folder (manifest, story, seed, docs, art), so a
+# customer demo stays on your machine and its name never appears in a shared file.
+demos/custom/
 # Private checks + Claude Code notes for demos that stay on your machine.
-# Customer demo files themselves go in .git/info/exclude (see README), so the
-# customer's name never appears in this shared file.
 qa_local/
 CLAUDE.local.md
 

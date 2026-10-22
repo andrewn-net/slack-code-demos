@@ -8,7 +8,8 @@ import textwrap
 
 import pytest
 
-from demokit import actions, routing, state, trash
+from demokit import actions, health, routing, state, trash
+from demokit.custom import package_dirs
 from demokit.manifest import Action, Option, load_demos, owned_files, parse
 
 
@@ -55,6 +56,28 @@ def repo(tmp_path):
         """)
     _write(root, "demos/example.toml", 'name = "Built-in"\nexample = true\n')
     return root
+
+
+@pytest.fixture
+def private(repo):
+    """A private demo: one folder under demos/custom/ holding all its files."""
+    base = "demos/custom/globex-launch"
+    _write(repo, f"{base}/scenarios/globex_launch.py", "SLUG = 'globex_launch'\n")
+    _write(repo, f"{base}/scenarios/assets/globex_logo.png", "png")
+    _write(repo, f"{base}/channels/seed_globex_launch.py", "print('seeded')\n")
+    _write(repo, f"{base}/docs/talk-track.md", "# talk\n")
+    _write(repo, f"{base}/demo.toml", f"""\
+        name = "Globex · Launch"
+        customer = "Globex"
+        scenarios = ["globex_launch"]
+        docs = [{{ label = "Talk track", path = "{base}/docs/talk-track.md" }}]
+
+        [[actions]]
+        id = "post-backstory"
+        label = "Post backstory"
+        run = ["{base}/channels/seed_globex_launch.py", "--create"]
+        """)
+    return repo
 
 
 # ---- manifests --------------------------------------------------------------
@@ -105,6 +128,66 @@ def test_owned_files_expands_dirs_globs_and_scenarios(repo):
         "docs/demos/acme-hero/talk-track.md", "docs/demos/acme-hero/click-path.html",
         "scenarios/assets/acme_logo.png", "scenarios/assets/acme_hero.jpg",
     }
+
+
+# ---- private demos (demos/custom/<id>/) ---------------------------------------
+
+def test_private_demo_is_listed_with_its_folder_name_as_id(private):
+    d = next(d for d in load_demos(private) if d.customer == "Globex")
+    assert d.id == "globex-launch" and not d.problems
+    assert d.folder == private / "demos/custom/globex-launch"
+    assert parse(private / "demos/acme-hero.toml").folder is None
+
+
+def test_private_demo_owns_its_whole_folder(private):
+    d = parse(private / "demos/custom/globex-launch/demo.toml")
+    rel = {str(p.relative_to(private.resolve())) for p in owned_files(d, private)}
+    base = "demos/custom/globex-launch"
+    assert rel == {f"{base}/{f}" for f in ("demo.toml", "scenarios/globex_launch.py",
+                                           "scenarios/assets/globex_logo.png",
+                                           "channels/seed_globex_launch.py", "docs/talk-track.md")}
+
+
+def test_private_demo_files_pass_the_health_checks(private):
+    demos = load_demos(private)
+    d = next(d for d in demos if d.id == "globex-launch")
+    labels = {c.label: c.ok for c in health.demo_checks(d, demos, private)}
+    assert labels["demos/custom/globex-launch/docs/talk-track.md exists"]
+    assert labels["demos/custom/globex-launch/channels/seed_globex_launch.py exists"]
+    assert "demos/custom/globex-launch/scenarios/globex_launch.py exists" in labels
+
+
+def test_delete_then_restore_a_private_demo(private):
+    demos = load_demos(private)
+    d = next(d for d in demos if d.id == "globex-launch")
+    entry = trash.delete(trash.plan_delete(d, demos, private), private)
+    assert not (private / "demos/custom/globex-launch").exists()  # whole folder gone
+    assert (private / "demos/custom").is_dir()                     # the parent stays
+    trash.restore(entry.name, private)
+    assert (private / "demos/custom/globex-launch/scenarios/assets/globex_logo.png").exists()
+
+
+def test_a_shared_and_a_private_demo_with_one_id_is_a_problem(private):
+    _write(private, "demos/globex-launch.toml", 'name = "Globex · Launch (old copy)"\n')
+    checks = health.repo_checks(load_demos(private), private)
+    dup = next(c for c in checks if c.label == "globex-launch has one manifest")
+    assert not dup.ok and "demos/globex-launch.toml" in dup.detail
+
+
+def test_a_private_demos_story_imports_like_a_shared_one(private, monkeypatch):
+    import importlib
+    import pkgutil
+    import scenarios
+
+    assert package_dirs("scenarios", private) == [str(private / "demos/custom/globex-launch/scenarios")]
+    monkeypatch.setattr(scenarios, "__path__", [*scenarios.__path__, *package_dirs("scenarios", private)])
+    try:
+        assert "globex_launch" in {m.name for m in pkgutil.iter_modules(scenarios.__path__)}
+        assert importlib.import_module("scenarios.globex_launch").SLUG == "globex_launch"
+    finally:
+        sys.modules.pop("scenarios.globex_launch", None)
+        if hasattr(scenarios, "globex_launch"):
+            delattr(scenarios, "globex_launch")
 
 
 # ---- trash ------------------------------------------------------------------

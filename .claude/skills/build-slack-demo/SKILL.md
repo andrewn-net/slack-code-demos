@@ -96,6 +96,23 @@ Present the menu and recommend based on the story. The SE can override.
 `ARTIFACTS` in the scenario = the subset you include (always contains `"diff"`).
 Let the story drive the default; confirm with the SE.
 
+## Before you write anything: private or shared?
+
+If the demo is for a real customer, ask whether it should stay on their machine
+only (usually yes; if they're unsure, make it private). That decides where every
+file goes:
+
+- **Private** — the whole demo lives in one git-ignored folder, `demos/custom/<id>/`
+  (kebab-case id), laid out like the repo: `scenarios/<slug>.py` (+
+  `scenarios/assets/`), `scenarios_tag/<slug>.py`, `channels/seed_<slug>.py`,
+  `docs/`, and the manifest as `demo.toml`. Nothing has to be added to
+  `.git/info/exclude`, and no shared file names the customer.
+- **Shared** — the repo's own folders, with the manifest as `demos/<id>.toml`.
+  Only for a fictional example that's meant to go back to the shared repo.
+
+Steps 4–7 give the shared paths. For a private demo, put each file at the same
+path inside `demos/custom/<id>/`. See "Private demos" in `.claude/CLAUDE.md`.
+
 ## Step 4 — Author the Slack Code scenario
 
 Copy `scenarios/_template.py` → `scenarios/<slug>.py` and fill EVERY member. The
@@ -139,7 +156,8 @@ Conditional on `ARTIFACTS`:
   scenario also needs `seed_filename() -> str` (non-empty).
 
 Then set its routing, in the scenario module itself (there's no list to register
-in: every module in `scenarios/` is discovered at import):
+in: every module in `scenarios/`, and in each `demos/custom/<id>/scenarios/`, is
+discovered at import):
 - `ROUTE_KEYWORDS` — the specific phrases that open THIS story ("checkout redesign",
   "card form"). No bare customer name: it would steal that customer's other
   stories' openers.
@@ -166,6 +184,8 @@ Copy `channels/seed_welloguard_redesign.py` → `channels/seed_<slug>.py` and ad
   optional icon_url) — do NOT require per-persona user tokens.
 - The roster invite is behind the `--invite` flag (OFF by default) and only runs
   when the SE passes it. Keep that gate; don't invite by default.
+- Keep its `ROOT = next(...)` line: it finds the repo's `config.py` from either
+  `channels/` or `demos/custom/<id>/channels/`.
 Keep it valid Python.
 
 ## Step 6 — (If building Claude Tag) author the Tag scenario
@@ -179,25 +199,23 @@ Study `scenarios_tag/scheduled_exports.py` and `scenarios_tag/blog_update.py`.
 
 ## Step 7 — Write the demo manifest
 
-Create `demos/<id>.toml` (kebab-case id, e.g. `acme-checkout-redesign`) so
-`./demo` lists the demo, runs its seed, and can hide or delete it as one unit.
-Copy the example in `demos/README.md` and fill it in:
+Create `demos/<id>.toml` (kebab-case id, e.g. `acme-checkout-redesign`), or
+`demos/custom/<id>/demo.toml` for a private demo, so `./demo` lists the demo,
+runs its seed, and can hide or delete it as one unit. Copy the example in
+`demos/README.md` and fill it in. Every path in it is repo-relative, so a private
+demo's start with `demos/custom/<id>/`:
 - `name`, `customer`, `summary` (the story + the flaw the check catches),
   `surfaces`;
 - `scenarios` / `tag_scenarios` — the slugs you authored;
 - `trigger` — the phrase the SE types after `@<bot>` (no `@` prefix);
 - `channels` — the seed's `CHANNEL_NAME`;
 - `files` — the seed script, `docs/demos/<id>/` if you wrote docs, and any
-  `scenarios/assets/<prefix>_*` art;
+  `scenarios/assets/<prefix>_*` art (skip it for a private demo: it owns its
+  whole folder);
 - one `[[actions]]` entry: `id = "post-backstory"`, `run =
   ["channels/seed_<slug>.py", "--create"]`, the `--invite` option ONLY if the SE
   opted into roster invites, and a `repeat_warning` that a second run posts a
   second copy of the thread.
-
-If the demo is for a real customer, ask whether it should stay on their machine
-only (usually yes). If so, add its files (scenario, seed, manifest, docs,
-assets) to `.git/info/exclude` so a later push can't share them; see "Private
-demos" in `.claude/CLAUDE.md`.
 
 ## Step 8 — Verify
 

@@ -24,7 +24,10 @@ from pathlib import Path
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# The repo root: the nearest folder up that holds config.py. A private demo's seed
+# sits deeper (demos/custom/<id>/channels/), so it can't just go up one level.
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "config.py").is_file())
+sys.path.insert(0, str(ROOT))
 from config import app_client, load_tokens  # noqa: E402
 
 CHANNEL_NAME = "welloguard-redesign"

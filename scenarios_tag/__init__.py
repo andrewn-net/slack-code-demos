@@ -41,20 +41,24 @@ a timer without any of these deltas; `turn_deltas()` only fire when a HUMAN post
 follow-up in the thread (a correction), interrupting the auto-advance to reprioritize.
 
 To add a Tag demo: copy `_template.py` -> `<slug>.py` and fill the constants. The
-module registers itself (every non-underscore module here is discovered at
-import), so there is no list to edit. No logic changes — pure data.
+module registers itself (every non-underscore module here, or in a private
+demo's `demos/custom/<id>/scenarios_tag/`, is discovered at import), so there is
+no list to edit. No logic changes — pure data.
 """
 from __future__ import annotations
 
 import importlib
 import logging
 import pkgutil
-from pathlib import Path
 from types import ModuleType
 
+from demokit.custom import package_dirs
 from demokit.state import hidden_slugs
 
 _log = logging.getLogger(__name__)
+
+# Private demos keep their Tag stories in demos/custom/<id>/scenarios_tag/.
+__path__ += package_dirs(__name__)
 
 _DEFAULT_PRIORITY = 50
 
@@ -65,7 +69,7 @@ def _discover() -> tuple[set[str], dict[str, str]]:
     recorded — routing must never crash on one broken story."""
     known: set[str] = set()
     errors: dict[str, str] = {}
-    for info in pkgutil.iter_modules([str(Path(__file__).resolve().parent)]):
+    for info in pkgutil.iter_modules(__path__):
         if info.name.startswith("_") or info.ispkg:
             continue
         try:

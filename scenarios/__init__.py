@@ -14,7 +14,9 @@ so it's diffable, self-testable offline, and identical every demo run.
 To add a demo: copy ``_template.py`` → ``<slug>.py`` and fill the module-level
 constants + functions it documents, including ``ROUTE_KEYWORDS`` (the phrases
 that open its code channel). The module registers itself: every non-underscore
-module in this package is discovered at import, so there is no list to edit.
+module in this package is discovered at import, so there is no list to edit. A
+private demo's stories live in ``demos/custom/<id>/scenarios/`` instead and are
+discovered the same way (see ``demokit/custom.py``).
 Seed a matching origin thread and relaunch. No logic changes — only data.
 
 Contract every scenario module must satisfy (duck-typed; see ``_template.py``):
@@ -66,12 +68,16 @@ from __future__ import annotations
 import importlib
 import logging
 import pkgutil
-from pathlib import Path
 from types import ModuleType
 
+from demokit.custom import package_dirs
 from demokit.state import hidden_slugs
 
 _log = logging.getLogger(__name__)
+
+# Private demos keep their stories in demos/custom/<id>/scenarios/. Adding those
+# folders to this package's path makes them import as scenarios.<slug> too.
+__path__ += package_dirs(__name__)
 
 # website_redesign is the default: its HTML Preview is a real landing page (the
 # hero artifact from Slack's launch demos). freeform is the SEEDLESS scenario
@@ -90,7 +96,7 @@ def _discover() -> tuple[set[str], dict[str, str]]:
     fails on it instead."""
     known: set[str] = set()
     errors: dict[str, str] = {}
-    for info in pkgutil.iter_modules([str(Path(__file__).resolve().parent)]):
+    for info in pkgutil.iter_modules(__path__):
         if info.name.startswith("_") or info.ispkg:
             continue
         try:

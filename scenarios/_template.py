@@ -15,6 +15,10 @@ Steps to add a demo:
   5. Add a ``demos/<id>.toml`` manifest so ``./demo`` lists and runs it.
   6. Relaunch via ``./run.sh`` (see HANDOFF.md → Run a demo) and demo.
 
+A private (customer) demo keeps all of these in its own git-ignored folder
+instead: ``demos/custom/<id>/scenarios/<slug>.py``, ``…/channels/seed_<slug>.py``
+and the manifest as ``…/demo.toml``. See ``demokit/custom.py``.
+
 No logic changes anywhere else — the orchestrator reads whatever scenario is active.
 """
 from __future__ import annotations

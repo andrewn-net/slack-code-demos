@@ -22,13 +22,22 @@ class Check:
     warn: bool = False   # when not ok: a warning, not an error
 
 
+def _rel(path: Path, root: Path) -> str:
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
 def demo_checks(demo: Demo, demos: list[Demo], root: Path = ROOT) -> list[Check]:
     import scenarios
     import scenarios_tag
 
     checks = [Check(f"manifest: {p}", False) for p in demo.problems]
-    for pkg, slugs, folder in ((scenarios, demo.scenarios, "scenarios"),
-                               (scenarios_tag, demo.tag_scenarios, "scenarios_tag")):
+    # A private demo's stories sit in its own folder: demos/custom/<id>/scenarios/.
+    base = f"{_rel(demo.folder, root)}/" if demo.folder else ""
+    for pkg, slugs, folder in ((scenarios, demo.scenarios, f"{base}scenarios"),
+                               (scenarios_tag, demo.tag_scenarios, f"{base}scenarios_tag")):
         for slug in slugs:
             if slug in pkg.DISCOVERY_ERRORS:
                 checks.append(Check(f"{folder}/{slug}.py loads", False, pkg.DISCOVERY_ERRORS[slug]))
@@ -56,11 +65,19 @@ def demo_checks(demo: Demo, demos: list[Demo], root: Path = ROOT) -> list[Check]
 
 
 def repo_checks(demos: list[Demo], root: Path = ROOT) -> list[Check]:
-    """Scenarios that failed to import, or that no manifest owns."""
+    """Scenarios that failed to import, or that no manifest owns; and two
+    manifests with the same id (a shared demo and a private copy of it)."""
     import scenarios
     import scenarios_tag
 
     checks = []
+    by_id: dict[str, list[Demo]] = {}
+    for d in demos:
+        by_id.setdefault(d.id, []).append(d)
+    for demo_id, same in sorted(by_id.items()):
+        if len(same) > 1:
+            where = " and ".join(_rel(d.path, root) for d in same)
+            checks.append(Check(f"{demo_id} has one manifest", False, f"{where} — delete or rename one"))
     for pkg, attr in ((scenarios, "scenarios"), (scenarios_tag, "tag_scenarios")):
         owners: dict[str, list[str]] = {}
         for d in demos:
@@ -70,7 +87,7 @@ def repo_checks(demos: list[Demo], root: Path = ROOT) -> list[Check]:
             checks.append(Check(f"{pkg.__name__}/{slug}.py loads", False, err))
         for slug in sorted(pkg._KNOWN - owners.keys()):
             checks.append(Check(f"{pkg.__name__}/{slug}.py belongs to a demo", False,
-                                "no demos/*.toml lists it, so ./demo can't show it", warn=True))
+                                "no demo manifest lists it, so ./demo can't show it", warn=True))
         for slug, ids in sorted(owners.items()):
             if len(ids) > 1:
                 checks.append(Check(f"{pkg.__name__}/{slug}.py has one owner", False,

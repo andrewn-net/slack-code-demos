@@ -88,8 +88,8 @@ but stop its trigger phrase opening it, hide it instead (`./demo hide <demo-id>`
 
 ## What NOT to commit
 
-`tokens.json`, `.env`, `.slack/`, `*_state.json`, `qa_local/`, `CLAUDE.local.md` and
-`personas/_demo_context.md` are gitignored — keep them that way. Before pushing,
+`tokens.json`, `.env`, `.slack/`, `*_state.json`, `demos/custom/`, `qa_local/`,
+`CLAUDE.local.md` and `personas/_demo_context.md` are gitignored — keep them that way. Before pushing,
 run the secret check:
 
 ```bash
