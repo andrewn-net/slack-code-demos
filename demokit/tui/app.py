@@ -14,6 +14,7 @@ import asyncio
 import os
 import shutil
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 from rich.text import Text
@@ -140,7 +141,8 @@ class DemoApp(App):
         self.query_one("#sidebar").border_title = "DEMOS"
         self.query_one("#activity").display = False
         self._fit_banner()
-        self.query_one("#output", RichLog).write(Text("What your demos' actions print shows up here.", style=MUTED))
+        self.query_one("#output", RichLog).write(Text("What you do here (and what your demos' actions print) shows up here.",
+                                                      style=MUTED))
         self.reload()
         self._update_chrome()
         self.set_interval(0.25, self._pump_bot)
@@ -554,6 +556,7 @@ class DemoApp(App):
         if d is None or (d.id not in state.hidden_demo_ids()) == event.value:
             return
         state.set_hidden(d.id, d.scenarios, d.tag_scenarios, hidden=not event.value)
+        self.record(f"Turned “{d.name}” {'on' if event.value else 'off'}")
         self.notify(f"{self.agent} responds to “{d.name}” again." if event.value
                     else f"Muted “{d.name}”. {self.agent} ignores its phrases until you turn it back on.")
         self._fill_list()
@@ -658,7 +661,7 @@ class DemoApp(App):
             self.push_screen(sheet)
         await self._render_page()
         log = self.query_one("#output", RichLog)
-        log.write(Text(f"▶ {d.name}: {a.label}{' ' + ' '.join(flags) if flags else ''}", style="bold"))
+        self.record(f"▶ {d.name}: {a.label}{' ' + ' '.join(flags) if flags else ''}", style="bold")
 
         def on_line(line: str) -> None:
             lines.append(line)
@@ -679,8 +682,8 @@ class DemoApp(App):
         self.outputs[(d.id, a.id)] = (lines, code)
         if sheet:
             sheet.finish(code)
-        log.write(Text(f"{'✓ Done' if code == 0 else f'✗ Failed (exit {code})'}: {a.label}",
-                       style=GOOD if code == 0 else DANGER))
+        self.record(f"{'✓ Done' if code == 0 else f'✗ Failed (exit {code})'}: {a.label}",
+                    style=GOOD if code == 0 else DANGER)
         if code != 0 and not sheet:
             self.notify(f"“{a.label}” didn't finish. Click Show output to see why.", severity="error")
         await self._render_page()
@@ -695,6 +698,7 @@ class DemoApp(App):
             if not ok:
                 return
             trash.delete(plan, self.root)
+            self.record(f"Deleted “{d.name}” (restorable from Recently Deleted)")
             msg = f"Deleted “{d.name}”. Restore it from Recently Deleted (X)."
             if self.bot.running:
                 msg += " Restart the bot so it lets go of this demo."
@@ -742,11 +746,14 @@ class DemoApp(App):
                     self.notify(f"Couldn't switch: {e}", severity="error")
                     return
                 changed = True
+                self.record(f"Switched the bot's persona to {p.slack_name}")
                 self.notify(f"The bot now appears as {p.slack_name}. Upload its picture in your app "
                             "settings (Bot settings → Open app settings).", timeout=8)
         f = state.bot_features()
         if (f["slack_code"], f["tag"]) != (result["slack_code"], result["tag"]):
             state.set_bot_features(result["slack_code"], result["tag"])
+            self.record(f"Slack Code {'on' if result['slack_code'] else 'off'}, "
+                        f"Claude Tag {'on' if result['tag'] else 'off'}")
             changed = True
         self._update_chrome()
         if changed and self.bot.running:
@@ -767,6 +774,7 @@ class DemoApp(App):
         new = [d.id for d in self.demos if d.id not in before]
         self.reload(select=new[0] if new else None)
         if new:
+            self.record(f"Built a new demo: {next(d.name for d in self.demos if d.id == new[0])}")
             self.notify("Your new demo is ready.")
 
     # ---- the bot --------------------------------------------------------------
@@ -774,6 +782,12 @@ class DemoApp(App):
     def _bot_env(self) -> dict[str, str]:
         f = state.bot_features()
         return {"SLACK_CODE_ENABLED": "1" if f["slack_code"] else "", "SLACK_TAG_ENABLED": "1" if f["tag"] else "0"}
+
+    def record(self, msg: str, style: str = "") -> None:
+        """Note something you did (or that happened) in the Activity tab."""
+        line = Text(f"{datetime.now():%H:%M:%S}  ", style=MUTED)
+        line.append(msg, style=style)
+        self.query_one("#output", RichLog).write(line)
 
     def _bot_log(self, text: Text) -> None:
         self.query_one("#bot-log", RichLog).write(text)
@@ -788,6 +802,12 @@ class DemoApp(App):
                 self.notify("The bot stopped unexpectedly. Press L and open Bot log to see why.",
                             severity="error", timeout=10)
             self._bot_was_running = running
+            if running:
+                self.record("Bot started", style=GOOD)
+            elif self._bot_stopping or code in (0, None, -2, 130):
+                self.record("Bot stopped")
+            else:
+                self.record(f"Bot stopped unexpectedly (exit {code}). See Bot log.", style=DANGER)
             self._update_chrome()
             self.call_later(self._render_page)
 

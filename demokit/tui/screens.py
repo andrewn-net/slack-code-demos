@@ -213,6 +213,7 @@ class RecentlyDeletedScreen(Sheet):
                         severity="error", timeout=10)
             return
         self.changed = True
+        self.app.record(f"Restored “{e.demo_name}”")
         self.notify(f"Restored “{e.demo_name}”.")
         self._refresh()
 
@@ -224,7 +225,9 @@ class RecentlyDeletedScreen(Sheet):
 
         def done(ok):
             if ok:
+                label = next((e.demo_name for e in trash.list_trash(self.root) if e.name == name), name)
                 trash.empty_trash(name, self.root)
+                self.app.record(f"Deleted “{label}” for good")
                 self._refresh()
 
         self.app.push_screen(ConfirmScreen("Delete it for good?", "You can't undo this.", "Delete", danger=True), done)
